@@ -1,0 +1,36 @@
+# Datasets
+data/
+
+# Trained models
+models/
+
+# Generated results
+results/
+
+# Python environment
+.venv/
+venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Serialized models
+*.joblib
+*.pkl
+*.pickle
+
+# Transformer/model files
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# IDE
+.vscode/
+.idea/
+
+# Environment/secrets
+.env
+token.json
+credentials.json
