@@ -1,3 +1,4 @@
+```gitignore
 # Datasets
 data/
 
@@ -7,13 +8,15 @@ models/
 # Generated results
 results/
 
-# Python environment
+# Python environments
 .venv/
 venv/
+env/
 
 # Python cache
 __pycache__/
 *.py[cod]
+**/__pycache__/
 
 # Serialized models
 *.joblib
@@ -25,12 +28,39 @@ __pycache__/
 *.safetensors
 *.pt
 *.pth
+*.onnx
+*.ckpt
+
+# Hugging Face caches
+.cache/
+huggingface/
+transformers/
 
 # IDE
 .vscode/
 .idea/
 
-# Environment/secrets
+# Environment variables and secrets
 .env
+.env.*
+!.env.example
 token.json
 credentials.json
+*.pem
+*.key
+
+# Dashboard local database
+dashboard/dashboard.db
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
