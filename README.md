@@ -1,447 +1,433 @@
 # Offensive Language Detection in Social Media
 
+A multilingual offensive-language detection system using **XLM-RoBERTa (XLM-R)** and a semantic hybrid classifier, evaluated on English and Indian code-mixed social-media text. The project also includes a Streamlit dashboard for interactive prediction, multilingual testing, screenshot analysis, model evaluation, and inference-time robustness checking.
+
 ## Overview
 
-Offensive language on social media is difficult to detect because users express harmful or abusive content using noisy, multilingual, code-mixed, contextual, and intentionally obfuscated text.
+Offensive language detection is challenging because social-media text can contain informal spelling, multilingual expressions, code-mixing, contextual language, and deliberately obfuscated words.
 
-This project develops a multilingual offensive-language detection framework using **XLM-RoBERTa (XLM-R)** combined with a semantic classification branch. The system is evaluated using English offensive-language data and multilingual Dravidian code-mixed data covering **Tamil, Malayalam, and Kannada**.
+This project develops a binary classification pipeline to identify **Offensive** and **Non-Offensive** text. It combines contextual predictions from XLM-RoBERTa with a semantic Logistic Regression classifier and evaluates the resulting system across English, Tamil, Malayalam, and Kannada.
 
-An additional inference-time robustness layer is implemented to examine whether predictions remain stable when complete sentences are subjected to generic text-obfuscation patterns.
+An additional inference-time robustness layer examines whether predictions change when complete sentences undergo generic text-obfuscation transformations. This layer reuses the existing trained model without retraining it.
 
----
+## Key Features
 
-## Objectives
-
-The main objectives of this project are:
-
-- Detect offensive and non-offensive social-media text.
-- Develop a binary offensive-language classification system.
-- Establish a classical machine-learning baseline.
-- Use XLM-R for contextual multilingual representation.
-- Combine contextual and semantic predictions using a hybrid approach.
-- Evaluate performance across English, Tamil, Malayalam, and Kannada.
-- Prevent duplicate and cross-split data leakage.
-- Perform language-wise evaluation and error analysis.
-- Analyze prediction stability under sentence-level text obfuscation.
-
----
+- Binary offensive-language classification.
+- Classical TF-IDF and Logistic Regression baseline.
+- Multilingual XLM-RoBERTa model.
+- Hybrid classification combining XLM-R and semantic predictions.
+- English, Tamil, Malayalam, and Kannada evaluation.
+- Dataset preprocessing, duplicate removal, and cross-split leakage checks.
+- Language-wise performance analysis and confusion matrices.
+- Error analysis covering false positives, false negatives, and high-confidence errors.
+- Sentence-level obfuscation and prediction-stability analysis.
+- Streamlit dashboard with interactive detection and multilingual testing.
+- Screenshot-based comment extraction and CSV batch analysis.
+- Prediction history and analytics.
 
 ## Key Contributions
 
-### 1. Multilingual Cross-Dataset Framework
+### 1. Multilingual cross-dataset evaluation
 
-The system combines an English offensive-language dataset with multilingual Dravidian code-mixed data containing:
+The project combines an English offensive-language dataset with multilingual Dravidian code-mixed data containing Tamil, Malayalam, and Kannada.
 
-- Tamil
-- Malayalam
-- Kannada
+### 2. Contextual-semantic hybrid classification
 
-This allows evaluation beyond a single language or dataset.
+The final detector combines the offensive probability from XLM-R with a semantic classifier trained on pooled XLM-R representations.
 
-### 2. Contextual-Semantic Hybrid Classification
+### 3. Leakage-controlled evaluation
 
-The final detection system combines:
+The data preparation pipeline performs duplicate removal and cross-split overlap checks to reduce evaluation leakage.
 
-- XLM-R contextual probability
-- XLM-R semantic representation
-- A semantic Logistic Regression classifier
+### 4. Language-wise analysis
 
-The two prediction signals are combined using calibrated weights.
+Performance is reported separately for English, Tamil, Malayalam, and Kannada, making differences in classification performance visible.
 
-### 3. Leakage-Controlled Dataset Preparation
+### 5. Inference-time robustness analysis
 
-The multilingual dataset was cleaned using:
+The additional robustness layer tests whether predictions remain stable under generic sentence-level transformations, including internal spacing, punctuation insertion, repeated characters, and zero-width characters.
 
-- Text normalization
-- Exact duplicate removal
-- Cross-split duplicate checking
-- Train/validation/test separation
+It identifies potential prediction instability; it does not establish whether a user intentionally attempted to evade detection.
 
-This reduces the possibility of artificially inflated evaluation results caused by duplicate sentences appearing across splits.
+### 6. Interactive dashboard
 
-### 4. Multilingual and Language-Wise Evaluation
+The Streamlit application provides an interface for trying text examples, examining predictions, checking robustness, reviewing performance, and analyzing uploaded screenshots or CSV files.
 
-The final system is evaluated separately on:
-
-- English
-- Tamil
-- Malayalam
-- Kannada
-
-This exposes differences in model behavior across languages instead of reporting only a single overall score.
-
-### 5. Inference-Time Evasion-Aware Robustness Analysis
-
-A final inference-time layer checks prediction stability under generic sentence-level text obfuscation patterns such as:
-
-- Internal character spacing
-- Punctuation insertion
-- Repeated-character variation
-- Zero-width character insertion
-
-The underlying trained model is kept frozen. No additional model training is performed for this layer.
-
-> The system identifies prediction instability; it does not determine the user's intention.
-
----
-
-# System Architecture
+## System Architecture
 
 ```text
-                    SOCIAL MEDIA TEXT
-                           |
-                           v
-                  Text Preprocessing
-                           |
-                           v
-              +------------+------------+
-              |                         |
-              v                         v
-        XLM-RoBERTa              Semantic Branch
-              |                         |
-              v                         v
-       XLM-R Probability       Mean + Max Pooling
-              |                         |
-              |                    Logistic Regression
-              |                         |
-              +------------+------------+
-                           |
-                           v
-                    Hybrid Prediction
-                           |
-                           v
-             Offensive / Non-Offensive
-                           |
-                           v
-                Independent Evaluation
-                           |
-                           v
-              Evasion-Aware Robustness
-                           |
-                           v
-               Sentence-Level Variants
-                           |
-                           v
-                 Same Frozen Model
-                           |
-                           v
-              Stability / Review Flag
-Datasets
-Dataset 1 - English Offensive Language
-File:
-data/train.csv
+             Social-Media Text
+                     |
+                     v
+              Preprocessing
+                     |
+          +----------+----------+
+          |                     |
+          v                     v
+    XLM-RoBERTa          Semantic Branch
+          |              Mean + Max Pooling
+          |                     |
+          v                     v
+    XLM-R Probability     Logistic Regression
+          |                     |
+          +----------+----------+
+                     |
+                     v
+              Hybrid Probability
+                     |
+                     v
+           Offensive / Non-Offensive
+                     |
+                     v
+            Independent Evaluation
+                     |
+                     v
+        Inference-Time Robustness Check
+                     |
+                     v
+         Sentence Variants and Comparison
+                     |
+                     v
+          Stability / Review Indicator
+```
 
-The dataset contains 60,000 records with:
-text
-label
+## Datasets
 
-Original categories include:
-- Non_Toxic
-- Homophobia_LGBTQphobia
-- Misogyny_Sexism
-- Racism_Xenophobia
-- Harassment_Stalking
-- Religious_Hate
-- Profanity_Insult
-For the binary classification task:
-Non_Toxic
-    -> Non-Offensive
+### Dataset 1: English offensive-language data
 
-All other categories
-    -> Offensive
+Expected local path: `data/train.csv`
 
-Binary distribution:
-Class	Samples
-Non-Offensive	8,571
-Offensive	51,429
-Total	60,000
+The dataset contains 60,000 records with `text` and `label` columns. Its original categories include Non_Toxic, Homophobia_LGBTQphobia, Misogyny_Sexism, Racism_Xenophobia, Harassment_Stalking, Religious_Hate, and Profanity_Insult.
 
+For binary classification:
 
-Dataset 2 - DravidianCodeMix
-File:
-data/dravidian_clean/dravidian_multilingual_clean.csv
+- `Non_Toxic` → `Non-Offensive` (0)
+- All other categories → `Offensive` (1)
 
-The dataset contains multilingual/code-mixed social-media text in:
-- Tamil
-- Malayalam
-- Kannada
-The original offensive-language labels are mapped into:
-0 -> Non-Offensive
-1 -> Offensive
+Original class distribution:
 
-After duplicate and leakage cleaning, the final dataset contains approximately:
-59,974 valid records
+| Class | Records |
+|---|---:|
+| Non-Offensive | 8,571 |
+| Offensive | 51,429 |
+| Total | 60,000 |
 
-Final language distribution:
-Language	Samples
-Tamil	41,732
-Malayalam	12,596
-Kannada	5,646
+### Dataset 2: DravidianCodeMix
 
+Expected local path: `data/dravidian_clean/dravidian_multilingual_clean.csv`
 
-Final class distribution:
-Class	Samples
-Non-Offensive	47,749
-Offensive	12,225
+This dataset contains multilingual and code-mixed social-media text in Tamil, Malayalam, and Kannada.
 
+The original labels are mapped to:
 
-Data Cleaning
-The multilingual dataset undergoes the following preprocessing:
-1. Text normalization
-2. Exact duplicate removal
-3. Cross-split duplicate detection
-4. Removal of train-validation overlap
-5. Removal of train-test overlap
-6. Removal of validation-test overlap
-Final independent split sizes used for evaluation:
-Training   : 48,743
-Validation : 5,643
-Testing    : 5,571
+- `0` → Non-Offensive
+- `1` → Offensive
 
-The final test evaluation combines:
-Dataset 1 test samples : 315
-Dataset 2 test samples : 5,571
+After the documented cleaning and deduplication process, the dataset contains 59,974 records.
 
-Total                  : 5,886
+| Language | Records |
+|---|---:|
+| Tamil | 41,732 |
+| Malayalam | 12,596 |
+| Kannada | 5,646 |
+| Total | 59,974 |
 
-Models
-Baseline
-The classical baseline uses:
-TF-IDF
-   +
-Logistic Regression
+| Class | Records |
+|---|---:|
+| Non-Offensive | 47,749 |
+| Offensive | 12,225 |
+| Total | 59,974 |
 
-Baseline results:
-Metric	Score
-Accuracy	0.8382
-Precision	0.8397
-Recall	0.8382
-F1-score	0.8379
+### Data preparation
 
+The preparation pipeline includes:
 
-XLM-RoBERTa
-The transformer component uses:
-xlm-roberta-base
+1. Text normalization.
+2. Exact duplicate removal.
+3. Cross-split duplicate detection.
+4. Removal of overlapping records across training, validation, and test splits.
+5. Binary label mapping.
+6. Separate evaluation on held-out test data.
 
-XLM-R provides contextual multilingual representations for the input sentence.
-Semantic Classification Branch
-The XLM-R representation is processed using:
-- Mean pooling
-- Max pooling
-The resulting semantic representation is used by:
-StandardScaler
-        +
-Logistic Regression
+Final Dataset 2 split sizes:
 
-Hybrid Prediction
-The final prediction combines:
-XLM-R probability
-+
-Semantic classifier probability
+| Split | Records |
+|---|---:|
+| Training | 48,743 |
+| Validation | 5,643 |
+| Testing | 5,571 |
 
-The calibrated configuration uses:
-XLM-R weight       = 0.55
-Semantic weight    = 0.45
-Threshold          = 0.65
+The final combined independent test evaluation contains 5,886 records: 315 English test records and 5,571 multilingual test records.
 
-Final Evaluation
-The final independent test evaluation contains:
-5,886 samples
+## Models and Methodology
 
-Overall performance:
-Metric	Score
-Accuracy	79.73%
-Macro-F1	73.32%
-Offensive Precision	60.31%
-Offensive Recall	60.19%
-Offensive F1	60.25%
+### Classical baseline
 
+The baseline uses TF-IDF vectorization followed by Logistic Regression.
 
-Language-Wise Performance
-Language	Accuracy	Macro-F1	Offensive F1
-English	100.00%	100.00%	100.00%
-Tamil	77.16%	68.49%	51.95%
-Malayalam	86.13%	57.88%	23.38%
-Kannada	77.70%	73.07%	61.90%
-Overall	79.73%	73.32%	60.25%
+| Metric | Score |
+|---|---:|
+| Accuracy | 83.82% |
+| Precision | 83.97% |
+| Recall | 83.82% |
+| F1-score | 83.79% |
 
+### Multilingual transformer
 
-The language-wise analysis demonstrates that multilingual offensive-language detection remains challenging, particularly for languages with fewer offensive examples.
-Error Analysis
-The final test set contains:
-Total samples : 5,886
-Errors        : 1,193
-Error rate    : approximately 20.27%
+The transformer component uses `xlm-roberta-base` to produce contextual representations of input sentences.
 
-Error analysis includes:
-- False positives
-- False negatives
-- High-confidence errors
-- Language-wise errors
-- Confusion matrices
-The analysis is used to identify limitations of the detector rather than relying only on overall accuracy.
-Evasion-Aware Robustness Layer
-The final inference-time layer operates on complete sentences.
+### Semantic classification branch
+
+The final semantic classifier uses mean and max pooling over XLM-R representations, followed by StandardScaler and Logistic Regression.
+
+### Hybrid prediction
+
+The final inference pipeline combines the XLM-R probability and semantic classifier probability using the saved calibration:
+
+| Parameter | Value |
+|---|---:|
+| XLM-R weight | 0.55 |
+| Semantic weight | 0.45 |
+| Decision threshold | 0.65 |
+
+The final prediction is based on the calibrated hybrid probability and threshold.
+
+## Final Evaluation Results
+
+The final independent test evaluation covers 5,886 samples.
+
+| Metric | Score |
+|---|---:|
+| Accuracy | 79.73% |
+| Macro-F1 | 73.32% |
+| Offensive Precision | 60.31% |
+| Offensive Recall | 60.19% |
+| Offensive F1 | 60.25% |
+
+### Language-wise performance
+
+| Language | Accuracy | Macro-F1 | Offensive F1 |
+|---|---:|---:|---:|
+| English | 100.00% | 100.00% | 100.00% |
+| Tamil | 77.16% | 68.49% | 51.95% |
+| Malayalam | 86.13% | 57.88% | 23.38% |
+| Kannada | 77.70% | 73.07% | 61.90% |
+| **Overall** | **79.73%** | **73.32%** | **60.25%** |
+
+The English test subset contains 315 records, so its reported score should be interpreted in light of that sample size. Performance also varies across the Dravidian languages, particularly for offensive-language recall and F1.
+
+### Error analysis
+
+The final test evaluation contains 1,193 errors, approximately 20.27% of the 5,886 samples.
+
+The analysis includes:
+
+- False positives and false negatives.
+- High-confidence errors.
+- Language-wise error patterns.
+- Confusion matrices.
+- Comparative performance visualizations.
+
+## Evasion-Aware Robustness Analysis
+
+The additional robustness layer operates on complete sentences using the frozen final detector.
+
 Example:
-Original:
-You are an idiot.
 
-Possible structural variants:
-You are an id iot.
-You are an id.iot.
-You are an idiiot.
+Original sentence: `You are an idiot.`
 
-Each complete sentence is passed through the same frozen Step 24 detector.
-The system compares:
-Original prediction
-        vs
-Variant predictions
+Illustrative structural variants:
 
-If substantial prediction instability is observed, the sentence can be marked for review.
-Important
-Step 32:
+- `You are an id iot.`
+- `You are an id.iot.`
+- `You are an idiiot.`
+
+The same detector evaluates the original sentence and its variants. The system compares the resulting probabilities and predictions to identify potential instability.
+
+This component:
+
 - Does not retrain XLM-R.
-- Does not train another classifier.
-- Does not use an offensive-word dictionary.
-- Does not use manually defined offensive sentences.
-- Does not determine user intention.
-- Uses the existing frozen Step 24 model.
-It is an inference-time robustness/evasion-aware analysis layer.
-Project Pipeline
-Dataset Collection
-        |
-        v
-Data Cleaning
-        |
-        v
-Binary Label Mapping
-        |
-        v
-Duplicate / Leakage Removal
-        |
-        v
-TF-IDF Baseline
-        |
-        v
-XLM-R Training
-        |
-        v
-Semantic Classifier
-        |
-        v
-Hybrid Model
-        |
-        v
-Independent Test Evaluation
-        |
-        v
-Language-Wise Evaluation
-        |
-        v
-Error Analysis
-        |
-        v
-Inference-Time Evasion-Aware Analysis
+- Does not introduce another trained classifier.
+- Does not rely on a manually defined offensive-word dictionary.
+- Does not determine the user's intention.
+- Reports possible prediction instability for review.
 
-Project Structure
-Offensive-Language-Detection-in-Social-Media/
-│
-├── data/
-│   ├── train.csv
-│   └── dravidian_clean/
-│       └── dravidian_multilingual_clean.csv
-│
+The robustness layer is an additional analysis feature, not a guarantee of correct classification for every transformed sentence.
+
+## Streamlit Dashboard
+
+The project includes a Streamlit dashboard in `dashboard/`.
+
+Dashboard capabilities include:
+
+- **Home:** Overall metrics and language-wise performance.
+- **Detect:** Single-sentence prediction and probability display.
+- **Multilingual Demo:** Batch testing of example sentences across languages.
+- **Screenshot Analysis:** OCR-based extraction and analysis of social-media comments.
+- **Robustness Check:** Comparison of original and obfuscated sentence predictions.
+- **Model Performance:** Evaluation metrics and language-wise results.
+- **History & Analytics:** Stored prediction history and visualizations.
+- **Settings:** Model artifact status and password management.
+
+## Repository Structure
+
+```text
+offensive-language-detection-social-media/
+├── dashboard/
+│   ├── app.py
+│   ├── auth.py
+│   ├── diagnose.py
+│   ├── ocr_utils.py
+│   ├── page_screenshot.py
+│   ├── predictor.py
+│   ├── robustness.py
+│   └── requirements_dashboard.txt
 ├── src/
-│   ├── train_mbert.py
-│   ├── step24_final.py
-│   ├── step25_diagnosis.py
-│   ├── step26_final_evaluation.py
-│   ├── step29_error_analysis.py
-│   └── step32_evasion_aware.py
-│
-├── results/
-│   └── ...
-│
+│   ├── 01_dataset_analysis.py
+│   ├── 02_data_leakage_check.py
+│   ├── ...
+│   ├── 24_realtime_multilingual_prediction.py
+│   ├── 25_diagnose_multilingual_model.py
+│   ├── 26_evaluate_final_system.py
+│   ├── ...
+│   ├── 29_error_analysis.py
+│   ├── 30_emoji_analysis.py
+│   ├── 31_emoji_aware_experiment.py
+│   └── 32_evasion_aware_moderation.py
 ├── README.md
 ├── .gitignore
 └── requirements.txt
+```
 
-Generated model files, datasets, logs, and experiment outputs should not be uploaded unnecessarily to GitHub.
-Technologies Used
+The `NOTES` file is optional and may remain local. The exact contents of each folder depend on the files included in the repository.
+
+### Large files and local artifacts
+
+The datasets, trained model files, and generated experiment results are excluded from GitHub through `.gitignore`.
+
+Expected local paths include:
+
+- `data/` — datasets.
+- `models/` — optional model artifacts, if used by a local script.
+- `results/` — trained Step 20/Step 24 artifacts, calibration files, evaluation outputs, and generated figures.
+
+**Important:** A fresh GitHub clone does not automatically contain these ignored files. To run the final detector, provide the required datasets and trained model artifacts locally at the paths expected by the code. The dashboard requires the frozen transformer, semantic classifier, calibration, and configuration files.
+
+## Installation
+
+### Prerequisites
+
+- Python 3.10 or a compatible version supported by the installed dependencies.
+- Git.
+- A Windows, Linux, or macOS environment.
+- Access to the required local model artifacts for inference.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/kavya1818-hub/offensive-language-detection-social-media.git
+cd offensive-language-detection-social-media
+```
+
+### 2. Create a virtual environment
+
+Windows PowerShell:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+If PowerShell blocks activation, use Command Prompt:
+
+```bat
+.venv\Scripts\activate.bat
+```
+
+### 3. Install project dependencies
+
+```bash
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+For dashboard dependencies:
+
+```bash
+pip install -r dashboard/requirements_dashboard.txt
+```
+
+Install optional OCR dependencies only if required by the screenshot-analysis feature.
+
+## Running the Dashboard
+
+From the repository root:
+
+```bash
+streamlit run dashboard/app.py
+```
+
+Streamlit will display a local URL, usually `http://localhost:8501`.
+
+The dashboard requires the expected trained model artifacts to be available locally. Installing Python dependencies alone does not recreate the ignored model files.
+
+For security, change any default demonstration credentials before exposing the application to other users.
+
+## Running Analysis Scripts
+
+The numbered scripts in `src/` cover dataset analysis, preprocessing, baseline experiments, transformer experiments, multilingual evaluation, visualizations, error analysis, and robustness analysis.
+
+Examples:
+
+```bash
+python src/01_dataset_analysis.py
+python src/26_evaluate_final_system.py
+python src/29_error_analysis.py
+python src/32_evasion_aware_moderation.py
+```
+
+Run a script only after checking its expected input paths and dependencies. Training scripts may require datasets and substantial computation. Final inference and evaluation scripts may require previously generated model artifacts.
+
+**The final model does not need to be retrained just to launch the dashboard if the required saved artifacts are already available.**
+
+## Technologies Used
+
 - Python
 - PyTorch
 - Hugging Face Transformers
 - XLM-RoBERTa
 - Scikit-learn
-- Pandas
-- NumPy
-- Matplotlib
-- Seaborn
+- Pandas and NumPy
+- Matplotlib and Seaborn
+- Plotly
+- Streamlit
 - Joblib
-Installation
-Clone the repository:
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd Offensive-Language-Detection-in-Social-Media
+- EasyOCR / Tesseract for optional screenshot analysis
 
-Create a virtual environment:
-python -m venv .venv
+## Limitations
 
-Activate on Windows:
-.venv\Scripts\activate
+- Classification performance varies across languages.
+- Offensive-language detection is sensitive to context, spelling variation, and code-mixing.
+- The English test subset is relatively small compared with the multilingual test set.
+- The semantic hybrid can still produce false positives and false negatives.
+- The robustness layer measures prediction instability; it cannot establish user intent.
+- Model performance depends on the training data and the distribution of real-world text.
+- The dashboard cannot reproduce final predictions until the required model artifacts are available.
 
-Install dependencies:
-pip install -r requirements.txt
+## Future Work
 
-Running the Project
-Baseline
-python src/train_baseline.py
+Potential improvements include:
 
-Final evaluation
-python src/step26_final_evaluation.py
+- More representative offensive-language data for low-resource languages.
+- Better handling of implicit and context-dependent offensive content.
+- Broader adversarial robustness evaluation.
+- Improved code-mixed language identification.
+- Explainable predictions and human-in-the-loop moderation.
+- Deployment as a secure real-time moderation service.
 
-Error analysis
-python src/step29_error_analysis.py
+## Conclusion
 
-Evasion-aware demonstration
-python src/step32_evasion_aware.py
+This project implements a multilingual offensive-language detection pipeline combining XLM-R contextual predictions with a semantic classification branch. It evaluates English and Dravidian code-mixed text, reports language-wise results, performs error analysis, and includes an inference-time robustness layer for sentence-level obfuscation.
 
-The final demonstration should use the already-trained model artifacts. The final inference and robustness stages do not require retraining the underlying XLM-R model.
+The Streamlit dashboard provides an interactive interface for exploring predictions, multilingual examples, robustness checks, and evaluation results. The project also documents the limitations of the model and the need for further improvement in language-specific offensive-language detection.
 
-Demonstration
-The final demonstration should show three aspects:
-1. Normal offensive/non-offensive prediction
-Example:
-You are an idiot.
-
-2. Multilingual prediction
-Examples from:
-Tamil
-Malayalam
-Kannada
-
-3. Evasion-aware robustness
-A complete sentence is passed through the frozen detector and its automatically generated obfuscated variants are compared.
-Limitations
-The system has several limitations:
-- Performance varies across languages.
-- Contextual offensive language remains challenging.
-- Multilingual and code-mixed text can produce prediction errors.
-- Obfuscation analysis detects prediction instability but cannot determine user intention.
-- The system does not guarantee perfect classification for every sentence.
-- The final model is dependent on the quality and distribution of the training datasets.
-Future Work
-Possible future improvements include:
-- Larger multilingual datasets
-- Better low-resource language coverage
-- More realistic social-media obfuscation generation
-- Improved contextual classification
-- Explainable offensive-language detection
-- Human-in-the-loop moderation
-- Adversarial robustness evaluation
-- Deployment as a real-time moderation API
-Conclusion
-This project presents a multilingual offensive-language detection framework combining contextual XLM-R representations with a semantic classification branch. The system is evaluated using English and Dravidian code-mixed data and reports both overall and language-specific performance.
-The project also includes an inference-time robustness layer that examines prediction stability under sentence-level text obfuscation without retraining the underlying detector.
-The resulting framework provides a practical pipeline for multilingual offensive-language detection, evaluation, error analysis, and robustness assessment.
-#   O f f e n s i v e - l a n g u a g e - d e t e c t i o n - s o c i a l - m e d i a  
- 
